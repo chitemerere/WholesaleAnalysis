@@ -173,7 +173,8 @@ if uploaded_file is not None:
         # Determine the products to plot
         if not selected_products:
             st.subheader('Trend Analysis for Top 6 Products')
-            products_to_plot = product_trends.sum(axis=1).nlargest(6).index
+            products_to_plot = product_trends.sum(axis=1).nlargest(6).index.astype(str)
+#             products_to_plot = product_trends.sum(axis=1).nlargest(6).index
             plot_title = 'Monthly Sales Trend for Top 6 Products (Nov 2022 - Nov 2023)'
         else:
             products_to_plot = selected_products
