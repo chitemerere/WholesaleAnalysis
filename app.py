@@ -153,7 +153,8 @@ if uploaded_file is not None:
         # Analyzing the trend for each product brand (DISCRIPTION)
 
         # Grouping the data by 'DISCRIPTION' and summing up the quantities for each month
-        product_trends = data.groupby('DISCRIPTION').sum()
+        product_trends = data.groupby('DISCRIPTION').sum(numeric_only=True)
+#         product_trends = data.groupby('DISCRIPTION').sum()
 
         # Transposing the dataframe for easier plotting
         product_trends_transposed = product_trends.T
