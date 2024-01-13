@@ -49,8 +49,9 @@ def plot_product_distribution_by_towns(selected_products, selected_towns, data):
         if selected_towns:
             filtered_data = filtered_data[filtered_data['TOWN'].isin(selected_towns)]
 
-        town_distribution = filtered_data.groupby('TOWN').sum().sum(axis=1).sort_values(ascending=False)
-
+#         town_distribution = filtered_data.groupby('TOWN').sum().sum(axis=1).sort_values(ascending=False)
+        town_distribution = filtered_data.groupby('TOWN').sum(numeric_only=True).sum(axis=1).sort_values(ascending=False)
+          
         plt.figure(figsize=(12, 6))
         town_distribution.plot(kind='bar', color='teal')
         plt.title(f'Distribution of {selected_product} in Selected Towns')
@@ -173,8 +174,7 @@ if uploaded_file is not None:
         # Determine the products to plot
         if not selected_products:
             st.subheader('Trend Analysis for Top 6 Products')
-            products_to_plot = product_trends.sum(axis=1).nlargest(6).index.astype(str)
-#             products_to_plot = product_trends.sum(axis=1).nlargest(6).index
+            products_to_plot = product_trends.sum(axis=1).nlargest(6).index
             plot_title = 'Monthly Sales Trend for Top 6 Products (Nov 2022 - Nov 2023)'
         else:
             products_to_plot = selected_products
