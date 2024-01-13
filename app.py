@@ -27,7 +27,8 @@ def plot_data(selected_towns, data):
         # If no towns are selected, display data for all towns
         filtered_data = data
 
-    town_dispensing = filtered_data.groupby('TOWN').sum()
+#     town_dispensing = filtered_data.groupby('TOWN').sum()
+    town_dispensing = filtered_data.groupby('TOWN').sum(numeric_only=True)
     total_dispensed_per_town = town_dispensing.sum(axis=1).sort_values(ascending=False)
 
     plt.figure(figsize=(12, 6))
