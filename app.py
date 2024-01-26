@@ -17,6 +17,13 @@ from statsmodels.tsa.arima.model import ARIMA
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from pmdarima import auto_arima
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+import datetime as dt
+from kneed import KneeLocator
+import warnings
+from mpl_toolkits.mplot3d import Axes3D
+warnings.filterwarnings('ignore')
 
 # Function to save plot
 def save_plot(fig, filename):
@@ -67,7 +74,32 @@ def plot_product_distribution_by_towns(selected_products, selected_towns, data):
         plt.show()
         st.pyplot(plt)
         
-  
+# Define a function to load data
+def load_data(uploaded_file):
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        # Attempt to convert 'Invoice Date' to datetime format
+        try:
+            data['Invoice Date'] = pd.to_datetime(data['Invoice Date'], format='%d/%m/%Y')
+        except Exception as e:
+            st.error(f"Error in converting 'Invoice Date' to datetime: {e}")
+            return None
+        return data
+    else:
+        return None
+    
+def cluster_segments (rfm):
+    if(rfm.RFM_SCORE>=9):
+        return 'Champions'
+    if(rfm.RFM_SCORE>=6 and rfm.RFM_SCORE<9):
+        return 'Potential Loyalist'
+    if(rfm.RFM_SCORE>=5 and rfm.RFM_SCORE<6):
+        return 'At Risk'
+    if(rfm.RFM_SCORE>=4 and rfm.RFM_SCORE<5):
+        return 'Can not Lose'
+    else:
+        return 'Lost'
+
 # Streamlit application layout
 st.image("logo.png", width=200)
 st.markdown("<h1 style='font-size:30px;'>Takanaka Healthcare Sales Analysis Dashboard</h1>", unsafe_allow_html=True)
@@ -75,7 +107,7 @@ st.markdown("<h1 style='font-size:30px;'>Takanaka Healthcare Sales Analysis Dash
 # Sidebar for navigation
 st.sidebar.title('Navigation')
 options = st.sidebar.radio('Select an Analysis:', 
-                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Model Evaluation'])
+                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Model Evaluation', 'Market Segmentation'])
 
 # Password input
 password_guess = st.text_input('What is the Password?', type ="password").strip()
@@ -939,14 +971,136 @@ if password_guess == st.secrets["password"]:
             else:
                 # Warning message if the model is not available
                 st.warning('No model available. Please run a forecast first.')
+                
+        elif options == 'Market Segmentation':
+            st.subheader("Market Segmentation")
+            
+            uploaded_file = st.file_uploader("Choose a CSV file", type="csv", key="dataload")
+            
+            if uploaded_file is not None:
+                data = load_data(uploaded_file)
+                data.columns = data.columns.str.strip()
+                if data is not None and 'Invoice Date' in data.columns:
+                    # Now that we have confirmed the data is loaded and the column exists,
+                    # we can proceed with the rest of the code that uses 'Invoice Date'
+                    try:
+                        # ... Perform further operations with 'data' ...
+                        # RFM Analysis
+                        latest_date = data['Invoice Date'].max() + dt.timedelta(days=1)
+                        rfm = data.groupby('Name').agg({
+                            'Invoice Date': lambda x: (latest_date - x.max()).days,
+                            'Name': 'count',
+                            'Units Sold': 'sum'
+                        }).rename(columns={'Invoice Date': 'Recency', 
+                                        'Name': 'Frequency', 
+                                        'Units Sold': 'MonetaryValue'})
+
+                        # Scale the data
+                        scaler = StandardScaler()
+                        rfm_scaled = scaler.fit_transform(rfm)
+
+                        # Determine the optimal number of clusters
+                        inertia = []
+                        for k in range(1, 11):
+                            kmeans = KMeans(n_clusters=k, random_state=0)
+                            kmeans.fit(rfm_scaled)
+                            inertia.append(kmeans.inertia_)
+
+                        # Plotting the Elbow Method
+                        st.write("Elbow Method to Determine Optimal Clusters:")
+                        plt.figure(figsize=(10, 6))
+                        # Create a figure and axis object
+                        fig, ax = plt.subplots()
+                        ax.scatter([1, 2, 3], [1, 2, 3])
+                        plt.plot(range(1, 11), inertia, marker='o')
+                        plt.title('The Elbow Method')
+                        plt.xlabel('Number of clusters')
+                        plt.ylabel('Inertia')
+                        st.pyplot(fig)
+
+                        # Finding the elbow point
+                        kl = KneeLocator(range(1, 11), inertia, curve='convex', direction='decreasing')
+                        optimal_clusters = kl.elbow
+                        st.write(f"Optimal Number of Clusters: {optimal_clusters}")
+                        
+                        st.title('Customer Segment Grouping')
+                        
+                       # K-Means clustering with optimal clusters
+                        kmeans = KMeans(n_clusters=optimal_clusters, random_state=0)
+                        rfm['Cluster'] = kmeans.fit_predict(rfm_scaled)
+                        rfm = rfm.sort_values(by='Cluster')
+                        
+                        rfm['RFM_SCORE'] = rfm['Recency'].astype('int') + rfm['Frequency'].astype('int') + rfm['MonetaryValue'].astype('int') 
+                        rfm['RFM Customer Segments'] = rfm.apply(cluster_segments,axis=1) 
+                        rfm['RFM Customer Segments'] 
+                        
+                        # Converting the DataFrame to CSV and encoding to bytes
+                        csv = rfm['RFM Customer Segments'].to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="Download Customer Segments CSV",
+                            data=csv,
+                            file_name="Custmer_Segment_Table.csv",
+                            mime='text/csv'
+                        )
+                    
+                        # Show the resulting segments in a table
+                        segment_table = rfm.groupby('RFM Customer Segments').agg({
+                            'Recency': 'mean',
+                            'Frequency': 'mean',
+                            'MonetaryValue': ['mean', 'count']
+                        }).sort_values(by=('MonetaryValue', 'count'), ascending=False)
+
+                        segment_table.reset_index(inplace=True)
+                        segment_table.columns = ['Segment', 'Average Recency', 'Average Frequency', 'Average Monetary Value', 'Customer Count']
+                        
+                        # Calculate the total number of customers
+                        total_customers = segment_table['Customer Count'].sum()
+
+                        # Calculate the percentage of customers in each segment
+                        segment_table['% Customer Count'] = (segment_table['Customer Count'] / total_customers) * 100
+                        
+                        st.title("Market Segments")
+                        st.write(segment_table)
+                        
+                        # Converting the DataFrame to CSV and encoding to bytes
+                        csv = segment_table.to_csv(index=False).encode('utf-8')
+                        st.download_button(
+                            label="Download Segment Table CSV",
+                            data=csv,
+                            file_name="Segment_Table.csv",
+                            mime='text/csv'
+                        )
+
+                        
+                        # Create a bar plot
+                        fig, ax = plt.subplots(figsize=(12, 6))
+                        sns.barplot(data=segment_table, x='Customer Count', y='Segment', ax=ax)
+
+                        # Add labels and title
+                        ax.set_xlabel('Customer Count')
+                        ax.set_ylabel('Segment')
+                        ax.set_title('Customer Count per Segment')
+
+                        # Display the plot in Streamlit
+                        st.pyplot(fig)
+                        
+                        # Visualization
+                        st.write("Customer Segmentation Plot:")
+                        sns.scatterplot(x='Recency', y='Frequency', hue='Cluster', data=rfm, palette='viridis')
+                        plt.title('RFM Customer Segments')
+                        plt.legend(title='Cluster')
+                        fig, ax = plt.subplots()
+                        # Use the axis object for plotting
+                        ax.scatter([1, 2, 3], [1, 2, 3])
+                        st.pyplot(fig)
+                       
+                    except TypeError as e:
+                        st.error(f"TypeError encountered: {e}")
+                else:
+                    st.error("The uploaded file does not contain an 'Invoice Date' column or failed to load correctly.")
+            else:
+                st.write("Please upload a CSV file.")
 
     else:
         st.warning('Please upload a CSV file to proceed.')
-
-
-
-# In[ ]:
-
-
-
 
