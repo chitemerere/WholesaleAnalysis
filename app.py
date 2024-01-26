@@ -1034,13 +1034,23 @@ if password_guess == st.secrets["password"]:
                         rfm['RFM Customer Segments'] = rfm.apply(cluster_segments,axis=1) 
                         rfm['RFM Customer Segments'] 
                         
-                        # Converting the DataFrame to CSV and encoding to bytes
-                        csv = rfm['RFM Customer Segments'].to_csv(index=False).encode('utf-8')
+                        # Reset the index to turn 'Name' from an index into a column
+                        rfm = rfm.reset_index()
+
+                        # Creating a new DataFrame with only 'Name' and 'RFM Customer Segments'
+                        rfm_segments = rfm[['Name', 'RFM Customer Segments']]
+
+                        # Function to convert DataFrame to CSV
+                        def convert_df_to_csv(df):
+                            return df.to_csv(index=False).encode('utf-8')
+
+                        # Provide a download button for the CSV file
+                        csv = convert_df_to_csv(rfm_segments)  # Convert the new DataFrame to CSV
                         st.download_button(
-                            label="Download Customer Segments CSV",
+                            label="Download RFM Customer Segments as CSV",
                             data=csv,
-                            file_name="Custmer_Segment_Table.csv",
-                            mime='text/csv'
+                            file_name='rfm_customer_segments.csv',
+                            mime='text/csv',
                         )
                     
                         # Show the resulting segments in a table
