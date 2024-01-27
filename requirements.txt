@@ -7,3 +7,4 @@ statsmodels==0.14.1
 scikit-learn==1.4.0
 pmdarima==2.0.4
  kneed==0.8.5
+plotly
