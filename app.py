@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import streamlit as st
@@ -24,6 +24,13 @@ from kneed import KneeLocator
 import warnings
 from mpl_toolkits.mplot3d import Axes3D
 warnings.filterwarnings('ignore')
+import plotly.express as px
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from wordcloud import WordCloud
+
+# Initialize the VADER SentimentIntensityAnalyzer
+analyzer = SentimentIntensityAnalyzer()
+
 
 # Function to save plot
 def save_plot(fig, filename):
