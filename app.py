@@ -27,6 +27,13 @@ warnings.filterwarnings('ignore')
 import plotly.express as px
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from wordcloud import WordCloud
+import nltk
+
+# Download NLTK vader_lexicon if not already downloaded
+try:
+    nltk.data.find('sentiment/vader_lexicon.zip')
+except LookupError:
+    nltk.download('vader_lexicon')
 
 # Initialize the VADER SentimentIntensityAnalyzer
 analyzer = SentimentIntensityAnalyzer()
