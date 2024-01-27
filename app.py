@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import streamlit as st
@@ -1094,16 +1094,28 @@ if password_guess == st.secrets["password"]:
                         # Display the plot in Streamlit
                         st.pyplot(fig)
                         
-                        # Visualization
-                        st.write("Customer Segmentation Plot:")
-                        sns.scatterplot(x='Recency', y='Frequency', hue='Cluster', data=rfm, palette='viridis')
-                        plt.title('RFM Customer Segments')
-                        plt.legend(title='Cluster')
-                        fig, ax = plt.subplots()
-                        # Use the axis object for plotting
-                        ax.scatter([1, 2, 3], [1, 2, 3])
+                        # Create a new figure for 3D plotting
+                        fig = plt.figure()
+                        ax = fig.add_subplot(111, projection='3d')
+
+                        # Plot data
+                        # Assuming 'MonetaryValue' is your third dimension
+                        sc = ax.scatter(rfm['Recency'], rfm['Frequency'], rfm['MonetaryValue'], c=rfm['Cluster'], cmap='viridis')
+
+                        # Set labels and title
+                        ax.set_xlabel('Recency')
+                        ax.set_ylabel('Frequency')
+                        ax.set_zlabel('Monetary Value')
+                        ax.set_title('RFM Customer Segments 3D')
+                        
+                        # Adjust legend
+                        # Create a legend and place it outside the plot area
+                        legend = ax.legend(*sc.legend_elements(), title='Cluster', loc='center left', bbox_to_anchor=(1.2, 0.5))
+
+                        # Show plot
                         st.pyplot(fig)
-                       
+                        
+                        
                     except TypeError as e:
                         st.error(f"TypeError encountered: {e}")
                 else:
@@ -1113,4 +1125,10 @@ if password_guess == st.secrets["password"]:
 
     else:
         st.warning('Please upload a CSV file to proceed.')
+
+
+# In[ ]:
+
+
+
 
