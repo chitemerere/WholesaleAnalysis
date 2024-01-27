@@ -1139,9 +1139,9 @@ if password_guess == st.secrets["password"]:
                 
         elif options == 'Sentiment Analysis':
                         
-            st.markdown("<h1 style='font-size:30px;'>Voice of the Customer: Sentiment Analysis</h1>", unsafe_allow_html=True)
-            
             filename = st.file_uploader("Upload reviews data:", type=("csv"))
+            
+            st.markdown("<h1 style='font-size:30px;'>Voice of the Customer: Sentiment Analysis</h1>", unsafe_allow_html=True)
 
             if filename is not None:
                 data = pd.read_csv(filename, encoding="utf-8")  # Assuming CSV file format
