@@ -1067,7 +1067,7 @@ if password_guess == st.secrets["password"]:
                         rfm = rfm.reset_index()
 
                         # Creating a new DataFrame with only 'Name' and 'RFM Customer Segments'
-                        rfm_segments = rfm[['Name', 'RFM Customer Segments', 'rfm[RFM_SCORE]']]
+                        rfm_segments = rfm[['Name', 'RFM Customer Segments']]
 
                         # Function to convert DataFrame to CSV
                         def convert_df_to_csv(df):
@@ -1090,7 +1090,7 @@ if password_guess == st.secrets["password"]:
                         }).sort_values(by=('MonetaryValue', 'count'), ascending=False)
 
                         segment_table.reset_index(inplace=True)
-                        segment_table.columns = ['Segment', 'Average Recency', 'Average Frequency', 'Average Monetary Value', 'Customer Count']
+                        segment_table.columns = ['Segment', 'Average Recency', 'Average Frequency', 'Average Monetary Value', 'Customer Count','RFM_SCORE']
                         
                         # Calculate the total number of customers
                         total_customers = segment_table['Customer Count'].sum()
