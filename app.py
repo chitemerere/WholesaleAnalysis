@@ -1090,7 +1090,7 @@ if password_guess == st.secrets["password"]:
                         }).sort_values(by=('MonetaryValue', 'count'), ascending=False)
 
                         segment_table.reset_index(inplace=True)
-                        segment_table.columns = ['Segment', 'Average Recency', 'Average Frequency', 'Average Monetary Value', 'Customer Count','RFM_SCORE']
+                        segment_table.columns = ['Segment', 'Average Recency', 'Average Frequency', 'Average Monetary Value', 'Customer Count','rfm']
                         
                         # Calculate the total number of customers
                         total_customers = segment_table['Customer Count'].sum()
