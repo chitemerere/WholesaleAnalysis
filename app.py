@@ -103,11 +103,11 @@ def load_data(uploaded_file):
         return None
     
 def cluster_segments (rfm):
-    if(rfm.RFM_SCORE>=18000):
+    if(rfm.RFM_SCORE>=450):
         return 'High Value Customers'
-    if(rfm.RFM_SCORE>=10000 and rfm.RFM_SCORE<18000):
+    if(rfm.RFM_SCORE>=340 and rfm.RFM_SCORE<450):
         return 'Potential Loyalist'
-    if(rfm.RFM_SCORE>=4000 and rfm.RFM_SCORE<10000):
+    if(rfm.RFM_SCORE>=280 and rfm.RFM_SCORE<340):
         return 'At Risk'
     else:
         return 'Sleelpig Customers'
