@@ -103,16 +103,14 @@ def load_data(uploaded_file):
         return None
     
 def cluster_segments (rfm):
-    if(rfm.RFM_SCORE>=9):
-        return 'Champions'
-    if(rfm.RFM_SCORE>=6 and rfm.RFM_SCORE<9):
+    if(rfm.RFM_SCORE>=18000):
+        return 'High Value Customers'
+    if(rfm.RFM_SCORE>=10000 and rfm.RFM_SCORE<18000):
         return 'Potential Loyalist'
-    if(rfm.RFM_SCORE>=5 and rfm.RFM_SCORE<6):
+    if(rfm.RFM_SCORE>=4000 and rfm.RFM_SCORE<10000):
         return 'At Risk'
-    if(rfm.RFM_SCORE>=4 and rfm.RFM_SCORE<5):
-        return 'Can not Lose'
     else:
-        return 'Lost'
+        return 'Sleelpig Customers'
 
 # Streamlit application layout
 st.image("logo.png", width=200)
