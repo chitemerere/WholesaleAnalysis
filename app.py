@@ -24,20 +24,6 @@ from kneed import KneeLocator
 import warnings
 from mpl_toolkits.mplot3d import Axes3D
 warnings.filterwarnings('ignore')
-import plotly.express as px
-from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from wordcloud import WordCloud
-import nltk
-
-# Download NLTK vader_lexicon if not already downloaded
-try:
-    nltk.data.find('sentiment/vader_lexicon.zip')
-except LookupError:
-    nltk.download('vader_lexicon')
-
-# Initialize the VADER SentimentIntensityAnalyzer
-analyzer = SentimentIntensityAnalyzer()
-
 
 # Function to save plot
 def save_plot(fig, filename):
@@ -116,12 +102,12 @@ def cluster_segments (rfm):
 
 # Streamlit application layout
 st.image("logo.png", width=200)
-st.markdown("<h1 style='font-size:30px;'>Takanaka Healthcare Sales Analysis Dashboard</h1>", unsafe_allow_html=True)
+st.title('PCD Sales Analysis Dashboard')
 
 # Sidebar for navigation
 st.sidebar.title('Navigation')
 options = st.sidebar.radio('Select an Analysis:', 
-                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Market Segmentation', 'Sentiment Analysis'])
+                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Model Evaluation', 'Market Segmentation'])
 
 # Password input
 password_guess = st.text_input('What is the Password?', type ="password").strip()
@@ -975,32 +961,17 @@ if password_guess == st.secrets["password"]:
                 file_name='forecast_data.csv',
                 mime='text/csv',
             )
-            
+
+        elif options == 'Model Evaluation':
             st.subheader("Model Evaluation")
-            # Check for NaN values in monthly_sales
-            if monthly_sales.isna().any():
-                st.write("Handling NaN values in monthly sales data.")
-                monthly_sales.fillna(method='ffill', inplace=True)  # Forward fill as an example
-
-            # Assuming monthly_sales is a Pandas Series or a list containing your entire time series data
-            # Slice the last 'forecast_periods' months from monthly_sales
-            actual_values = np.array(monthly_sales[-forecast_periods:])
-
-            # Ensure forecast is a numpy array
-            forecast_values = np.array(forecast)  # Your forecasted sales data
-
-            # Calculate the metrics
-            mae = mean_absolute_error(actual_values, forecast_values)
-            mse = mean_squared_error(actual_values, forecast_values)
-            rmse = np.sqrt(mse)
-            mape = np.mean(np.abs((actual_values - forecast_values) / (actual_values + np.finfo(float).eps))) * 100
-
-            # Display the metrics in Streamlit
-            st.metric("Mean Absolute Error", f"{mae:.2f}")
-            st.metric("Mean Squared Error", f"{mse:.2f}")
-            st.metric("Root Mean Squared Error", f"{rmse:.2f}")
-            st.metric("Mean Absolute Percentage Error", f"{mape:.2f}%")
-               
+            # Check if the model is stored in the session state
+            if 'auto_model' in st.session_state:
+                # Display the model summary
+                st.text(st.session_state.auto_model.summary())
+            else:
+                # Warning message if the model is not available
+                st.warning('No model available. Please run a forecast first.')
+                
         elif options == 'Market Segmentation':
             st.subheader("Market Segmentation")
             
@@ -1065,19 +1036,9 @@ if password_guess == st.secrets["password"]:
                         
                         # Reset the index to turn 'Name' from an index into a column
                         rfm = rfm.reset_index()
-                        
-                        #
-                        # Check the rfm DataFrame
-                        print(rfm.head())  # Inspect the first few rows of the rfm DataFrame
-
 
                         # Creating a new DataFrame with only 'Name' and 'RFM Customer Segments'
-                        rfm_segments = rfm[['Name', 'RFM_SCORE', 'RFM Customer Segments']]
-                        
-                        #
-                        # Inspect the rfm_segments DataFrame
-                        print(rfm_segments.head())  # Inspect the first few rows of the rfm_segments DataFrame
-
+                        rfm_segments = rfm[['Name', 'RFM Customer Segments']]
 
                         # Function to convert DataFrame to CSV
                         def convert_df_to_csv(df):
@@ -1153,118 +1114,14 @@ if password_guess == st.secrets["password"]:
 
                         # Show plot
                         st.pyplot(fig)
-                        
-                        
+                       
                     except TypeError as e:
                         st.error(f"TypeError encountered: {e}")
                 else:
                     st.error("The uploaded file does not contain an 'Invoice Date' column or failed to load correctly.")
             else:
                 st.write("Please upload a CSV file.")
-                
-        elif options == 'Sentiment Analysis':
-                        
-            filename = st.file_uploader("Upload reviews data:", type=("csv"))
-            
-            st.markdown("<h1 style='font-size:30px;'>Voice of the Customer: Sentiment Analysis</h1>", unsafe_allow_html=True)
-
-            if filename is not None:
-                data = pd.read_csv(filename, encoding="utf-8")  # Assuming CSV file format
-                data["body"] = data["body"].astype("str")
-
-                # Apply VADER sentiment analysis
-                data["scores"] = data["body"].apply(lambda x: analyzer.polarity_scores(x)["compound"])
-                data["sentiment"] = data["scores"].apply(lambda x: "Positive" if x >= 0.05 else ("Neutral" if x > -0.05 else "Negative"))
-
-                data = data[['brand', 'body', 'sentiment', 'scores', 'date']]
-                data['date'] = pd.to_datetime(data['date'])
-                data['quarter'] = pd.PeriodIndex(data.date, freq='Q')
-
-                # Create a dynamic list of unique brands from the data
-                brands = data['brand'].unique().tolist()
-
-                # Set the default selected brand to be the first brand in the list
-                default_brand = brands[0]
-
-                st.sidebar.write("Select Brands for Sentiment Analysis:")
-                selected_brands = st.sidebar.multiselect("Select brands:", brands, default=default_brand)
-
-                # Define colors for sentiments
-                sentiment_colors = {"Positive": "green", "Neutral": "blue", "Negative": "red"}
-
-                st.subheader("Sentiment Analysis for Selected Brands")
-
-                brand_sentiments = []
-
-                for brand in selected_brands:
-                    st.markdown(f"### {brand}")
-                    brand_data = data[data['brand'] == brand]
-
-                    # Processing data for sentiment analysis
-                    sentiment_count = brand_data['sentiment'].value_counts().reset_index()
-                    sentiment_count.columns = ['Sentiment', 'Count']
-
-                    # Displaying review counts
-                    st.sidebar.write(f"Reviews count by brand ({brand}):")
-                    st.sidebar.write(sentiment_count)
-
-                    # Plotting sentiment distribution with specified colors
-                    st.subheader(f"Brand Reviews Sentiment Distribution ({brand})")
-                    fig = px.pie(sentiment_count, values='Count', names='Sentiment', title=f'Sentiment distribution for {brand}', color='Sentiment', color_discrete_map=sentiment_colors)
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    # Trend analysis
-                    st.subheader(f"Trend Analysis of Sentiments for {brand}")
-
-                    # First, ensure the 'date' column is in datetime format
-                    brand_data['date'] = pd.to_datetime(brand_data['date'])
-
-                    # Create a 'Month-Year' column before grouping
-                    brand_data['Month-Year'] = brand_data['date'].dt.strftime('%m-%Y')
-
-                    # Group by the original 'date' column and 'sentiment', then create 'Month-Year' for display
-                    trend_data = brand_data.groupby([pd.Grouper(key='date', freq='M'), 'sentiment']).size().reset_index(name='Count')
-                    trend_data['Month-Year'] = trend_data['date'].dt.strftime('%m-%Y')
-
-                    # No need to sort by 'Month-Year' as it's already sorted by the 'date' column
-                    fig2 = px.line(trend_data, x="Month-Year", y="Count", color='sentiment', title=f'Monthly Sentiment Trends for {brand}', color_discrete_map=sentiment_colors)
-                    st.plotly_chart(fig2, use_container_width=True)
-
-
-                    # Word clouds for each sentiment
-                    st.subheader(f"Word Clouds for Reviews Sentiment ({brand})")
-                    col1, col2, col3 = st.columns(3)
-                    for sentiment, col in zip(['Positive', 'Neutral', 'Negative'], [col1, col2, col3]):
-                        sentiment_data = brand_data[brand_data['sentiment'] == sentiment]
-                        words = ' '.join(sentiment_data['body'])
-                        if words:
-                            wordcloud = WordCloud(width=300, height=150).generate(words)
-                            col.image(wordcloud.to_array(), caption=f'{sentiment} Reviews Word Cloud', use_column_width=True)
-
-                    # Display top 5 reviews for each sentiment
-                    for sentiment in ['Positive', 'Neutral', 'Negative']:
-                        st.subheader(f"Top 5 {sentiment} Reviews for {brand}:")
-                        sentiment_reviews = brand_data[brand_data['sentiment'] == sentiment].nlargest(5, 'scores')
-                        if not sentiment_reviews.empty:
-                            for index, row in sentiment_reviews.iterrows():
-                                st.write(f"{row['body']} - Score: {row['scores']}")
-                        else:
-                            st.write(f"No {sentiment.lower()} reviews found for this brand.")
-
-                    brand_sentiments.append(brand_data)
-
-                # Sentiment comparison between selected brands
-                st.subheader("Sentiment Comparison Between Brands")
-                combined_data = pd.concat(brand_sentiments)
-                fig3 = px.bar(combined_data, x="brand", y="scores", color="sentiment", barmode="group", title='Sentiment Comparison Between Brands', color_discrete_map=sentiment_colors)
-                st.plotly_chart(fig3, use_container_width=True)
 
     else:
         st.warning('Please upload a CSV file to proceed.')
-
-
-# In[ ]:
-
-
-
 
