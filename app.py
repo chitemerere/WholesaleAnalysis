@@ -121,7 +121,7 @@ st.markdown("<h1 style='font-size:30px;'>Takanaka Healthcare Sales Analysis Dash
 # Sidebar for navigation
 st.sidebar.title('Navigation')
 options = st.sidebar.radio('Select an Analysis:', 
-                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Model Evaluation', 'Market Segmentation', 'Sentiment Analysis'])
+                           ['Trend Analysis','Geographical Analysis','Product Performance', 'Pharmacy Performance', 'Alerts','Sales Forecasting', 'Market Segmentation', 'Sentiment Analysis'])
 
 # Password input
 password_guess = st.text_input('What is the Password?', type ="password").strip()
@@ -975,17 +975,32 @@ if password_guess == st.secrets["password"]:
                 file_name='forecast_data.csv',
                 mime='text/csv',
             )
-
-        elif options == 'Model Evaluation':
+            
             st.subheader("Model Evaluation")
-            # Check if the model is stored in the session state
-            if 'auto_model' in st.session_state:
-                # Display the model summary
-                st.text(st.session_state.auto_model.summary())
-            else:
-                # Warning message if the model is not available
-                st.warning('No model available. Please run a forecast first.')
-                
+            # Check for NaN values in monthly_sales
+            if monthly_sales.isna().any():
+                st.write("Handling NaN values in monthly sales data.")
+                monthly_sales.fillna(method='ffill', inplace=True)  # Forward fill as an example
+
+            # Assuming monthly_sales is a Pandas Series or a list containing your entire time series data
+            # Slice the last 'forecast_periods' months from monthly_sales
+            actual_values = np.array(monthly_sales[-forecast_periods:])
+
+            # Ensure forecast is a numpy array
+            forecast_values = np.array(forecast)  # Your forecasted sales data
+
+            # Calculate the metrics
+            mae = mean_absolute_error(actual_values, forecast_values)
+            mse = mean_squared_error(actual_values, forecast_values)
+            rmse = np.sqrt(mse)
+            mape = np.mean(np.abs((actual_values - forecast_values) / (actual_values + np.finfo(float).eps))) * 100
+
+            # Display the metrics in Streamlit
+            st.metric("Mean Absolute Error", f"{mae:.2f}")
+            st.metric("Mean Squared Error", f"{mse:.2f}")
+            st.metric("Root Mean Squared Error", f"{rmse:.2f}")
+            st.metric("Mean Absolute Percentage Error", f"{mape:.2f}%")
+               
         elif options == 'Market Segmentation':
             st.subheader("Market Segmentation")
             
