@@ -1068,7 +1068,7 @@ if password_guess == st.secrets["password"]:
                         
                         #
                         # Check the rfm DataFrame
-                        st.write(rfm.head())  # Inspect the first few rows of the rfm DataFrame
+                        st.write(rfm)  # Inspect the first few rows of the rfm DataFrame
 
 
                         # Creating a new DataFrame with only 'Name' and 'RFM Customer Segments'
@@ -1076,7 +1076,7 @@ if password_guess == st.secrets["password"]:
                         
                         #
                         # Inspect the rfm_segments DataFrame
-                        st.write(rfm_segments.head())  # Inspect the first few rows of the rfm_segments DataFrame
+                        st.write(rfm_segments)  # Inspect the first few rows of the rfm_segments DataFrame
 
 
                         # Function to convert DataFrame to CSV
