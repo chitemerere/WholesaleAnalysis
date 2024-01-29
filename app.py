@@ -980,12 +980,32 @@ if password_guess == st.secrets["password"]:
                 st.write("Handling NaN values in monthly sales data.")
                 monthly_sales.fillna(method='ffill', inplace=True)  # Forward fill as an example
 
-            # Assuming monthly_sales is a Pandas Series or a list containing your entire time series data
+#             # Assuming monthly_sales is a Pandas Series or a list containing your entire time series data
+#             # Slice the last 'forecast_periods' months from monthly_sales
+#             actual_values = np.array(monthly_sales[-forecast_periods:])
+
+#             # Ensure forecast is a numpy array
+#             forecast_values = np.array(forecast)  # Your forecasted sales data
+            
+#             if len(actual_values) != len(forecast_values):
+#             # Option 1: Truncate the longer array (example)
+#             min_length = min(len(actual_values), len(forecast_values))
+#             actual_values = actual_values[:min_length]
+#             forecast_values = forecast_values[:min_length]
+
+            # Ensure forecast_periods is an integer and not larger than the length of monthly_sales
+            forecast_periods = min(forecast_periods, len(monthly_sales))
+
             # Slice the last 'forecast_periods' months from monthly_sales
             actual_values = np.array(monthly_sales[-forecast_periods:])
 
-            # Ensure forecast is a numpy array
-            forecast_values = np.array(forecast)  # Your forecasted sales data
+            # Ensure forecast is a numpy array and has the same length as forecast_periods
+            forecast_values = np.array(forecast[:forecast_periods])
+
+            # Check if lengths match
+            if len(actual_values) != len(forecast_values):
+                raise ValueError(f"Length mismatch: actual_values has {len(actual_values)} elements, "
+                                 f"forecast_values has {len(forecast_values)} elements.")
 
             # Calculate the metrics
             mae = mean_absolute_error(actual_values, forecast_values)
