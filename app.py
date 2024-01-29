@@ -1067,7 +1067,7 @@ if password_guess == st.secrets["password"]:
                         rfm = rfm.reset_index()
 
                         # Creating a new DataFrame with only 'Name' and 'RFM Customer Segments'
-                        rfm_segments = rfm[['Name', 'RFM Customer Segments']]
+                        rfm_segments = rfm[['Name', 'RFM Customer Segments', 'RFM_SCORE']]
 
                         # Function to convert DataFrame to CSV
                         def convert_df_to_csv(df):
