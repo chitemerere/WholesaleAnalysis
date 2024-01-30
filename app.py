@@ -1147,9 +1147,18 @@ if password_guess == st.secrets["password"]:
                         ax.set_xlabel('Customer Count')
                         ax.set_ylabel('Segment')
                         ax.set_title('Customer Count per Segment')
-
+                        
                         # Display the plot in Streamlit
                         st.pyplot(fig)
+                        
+                        # Create a treemap chart
+                        fig = px.treemap(segment_table, path=['Segment'], values='Customer Count')
+
+                        # Set chart title
+                        fig.update_layout(title='Customer Count per Segment (Treemap)')
+
+                        # Display the treemap chart in Streamlit
+                        st.plotly_chart(fig)
                         
                         # Create a new figure for 3D plotting
                         fig = plt.figure()
